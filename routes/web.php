@@ -11,6 +11,5 @@
 |
 */
 
-$router->get('/', function () use ($router) {
-    return $router->app->version();
-});
+$router->post('/update/{version}', 'UpdateController@uploadUpdate');
+$router->get('/check-update/{platform}/{version}', 'UpdateController@checkUpdate');
