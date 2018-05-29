@@ -15,6 +15,17 @@ class UpdateController
         $versionManager = new VersionManager();
         $versionScanner = new VersionScanner();
 
+        // check if this upload is password protected
+        $passwordHeader = env('UPLOAD_PASSWORD_HEADER', false);
+        $uploadPassword = env('UPLOAD_PASSWORD', false);
+        if ($passwordHeader && $uploadPassword) {
+
+            // check if password header is set correctly
+            if ($request->input($passwordHeader) !== $uploadPassword) {
+                return response('Upload password wrong.', 401);
+            }
+        }
+
         $updateDir = $versionManager->getUpdateDir();
         $tempDir = sys_get_temp_dir();
         $uploadFileName = "${version}.tar.gz";
@@ -23,12 +34,7 @@ class UpdateController
         if ($request->hasFile('app-update') && $request->file('app-update')->isValid()) {
 
             // delete contents of update dir
-            array_map(function ($file) {
-                if (is_file($file)) {
-                    echo "deleting file ${file} \n";
-                    //unlink($file);
-                }
-            }, glob("${updateDir}/*"));
+            $versionManager->clearUpdateDirectory();
 
             // move tar into update folder
             $request->file('app-update')->move(

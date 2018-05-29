@@ -58,9 +58,23 @@ class VersionManager
         return json_encode($versionFile);
     }
 
+    private function delTree($dir)
+    {
+        $files = array_diff(scandir($dir), array('.', '..'));
+        foreach ($files as $file) {
+            (is_dir("$dir/$file")) ? $this->delTree("$dir/$file") : unlink("$dir/$file");
+        }
+        return rmdir($dir);
+    }
+
+    public function clearUpdateDirectory()
+    {
+        $this->delTree($this->updateDir);
+    }
+
     public function setCurrentVersion($version)
     {
-      $versionFile = $this->getVersionFileFullPath();
+        $versionFile = $this->getVersionFileFullPath();
         file_put_contents($versionFile, $this->constructVersionFile($version));
     }
 
@@ -68,13 +82,14 @@ class VersionManager
     {
         $versionFile = $this->getVersionFileFullPath();
         if (file_exists($versionFile)) {
-          return json_decode(file_get_contents($versionFile));
+            return json_decode(file_get_contents($versionFile));
         } else {
-          return (object)$this->versionDefault;
+            return (object) $this->versionDefault;
         }
     }
 
-    public function getUpdateFilePathByPlatform($platform) {
+    public function getUpdateFilePathByPlatform($platform)
+    {
         $currentVersion = $this->getCurrentVersion();
         $updateFile = $currentVersion->$platform;
         if ($updateFile) {
@@ -84,11 +99,12 @@ class VersionManager
         return null;
     }
 
-    public function updateAvailable($requestedVersion, $platform) {
-      $currentVersion = $this->getCurrentVersion();
-      if(version_compare($requestedVersion, $currentVersion->currentVersion) === -1) {
-        return ($currentVersion->$platform !== null);
-      }
-      return false;
+    public function updateAvailable($requestedVersion, $platform)
+    {
+        $currentVersion = $this->getCurrentVersion();
+        if (version_compare($requestedVersion, $currentVersion->currentVersion) === -1) {
+            return ($currentVersion->$platform !== null);
+        }
+        return false;
     }
 }
