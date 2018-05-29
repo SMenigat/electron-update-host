@@ -12,4 +12,5 @@
 */
 
 $router->post('/update/{version}', 'UpdateController@uploadUpdate');
+$router->get('/update/{platform}/latest', 'UpdateController@downloadLatest');
 $router->get('/check-update/{platform}/{version}', 'UpdateController@checkUpdate');

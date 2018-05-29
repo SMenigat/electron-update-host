@@ -2,7 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\VersionManager;
 use App\VersionScanner;
+use App\PlatformDetector;
 use Illuminate\Http\Request;
 use splitbrain\PHPArchive\Tar;
 
@@ -10,7 +12,10 @@ class UpdateController
 {
     public function uploadUpdate($version, Request $request)
     {
-        $updateDir = __DIR__ . '/../../../app-updates';
+        $versionManager = new VersionManager();
+        $versionScanner = new VersionScanner();
+
+        $updateDir = $versionManager->getUpdateDir();
         $tempDir = sys_get_temp_dir();
         $uploadFileName = "${version}.tar.gz";
         $fullFilePath = "${tempDir}/${uploadFileName}";
@@ -18,7 +23,12 @@ class UpdateController
         if ($request->hasFile('app-update') && $request->file('app-update')->isValid()) {
 
             // delete contents of update dir
-            array_map('unlink', glob("${updateDir}/*"));
+            array_map(function ($file) {
+                if (is_file($file)) {
+                    echo "deleting file ${file} \n";
+                    //unlink($file);
+                }
+            }, glob("${updateDir}/*"));
 
             // move tar into update folder
             $request->file('app-update')->move(
@@ -31,30 +41,47 @@ class UpdateController
             $tar->open($fullFilePath);
             $tar->extract($updateDir);
 
+            // write current version file
+            $versionManager->setCurrentVersion($versionScanner->parseToken($version));
+
             // remove temp file
-            if(file_exists($fullFilePath)) {
+            if (file_exists($fullFilePath)) {
                 unlink($fullFilePath);
             }
-            
+
             return response('Ok', 200);
         }
         return response('Could not find app-update', 400);
     }
+
     public function checkUpdate($platform, $version)
     {
-
+        $versionManager = new VersionManager();
         $versionScanner = new VersionScanner();
+        $requestedPlattform = PlatformDetector::detect($platform);
 
-        //
-        $response = [
-            'scannedVersion' => $versionScanner->parseToken($version),
-            'updateAvailable' => true,
-            'currentVersion' => '0.8.3',
-            'mac' => '..../mac',
-            'windows' => '..../windows',
-            'linux' => '..../linux',
-        ];
+        if ($versionManager->updateAvailable(
+            $versionScanner->parseToken($version),
+            $requestedPlattform
+        )) {
+            $currentVersion = $versionManager->getCurrentVersion();
+            $response = [
+                "latestVersion" => $currentVersion->currentVersion,
+                "updatePath"  => url("/update/${requestedPlattform}/latest"),
+            ];
+            return response()->json($response);
+        }
+        return response('No update available.', 204);
+    }
 
-        return response()->json($response);
+    public function downloadLatest($platform) {
+        $versionManager = new VersionManager();
+        $currentVersion = $versionManager->getCurrentVersion();
+        $updateFilePath = $versionManager->getUpdateFilePathByPlatform($platform);
+
+        if ($updateFilePath) {
+            return response()->download($updateFilePath, $currentVersion->$platform);
+        }
+        return response('No update available.', 204);
     }
 }
