@@ -8,7 +8,9 @@ class VersionManager
     private $versionFile = 'currentVersion.json';
 
     private $versionDefault = [
-        "currentVersion" => '',
+        "releaseNotes" => '',
+        "releaseName" => '',
+        "releaseDate" => '',
         "windows" => null,
         "mac" => null,
         "linux" => null,
@@ -49,7 +51,8 @@ class VersionManager
     {
         $updateDir = $this->updateDir;
         $versionFile = array_merge($this->versionDefault, [
-            "currentVersion" => $version,
+            "releaseName" => $version,
+            "releaseDate" => time(),
             "windows" => $this->getFirstFileOfDir("${updateDir}/windows"),
             "mac" => $this->getFirstFileOfDir("${updateDir}/mac"),
             "linux" => $this->getFirstFileOfDir("${updateDir}/linux"),
@@ -84,7 +87,7 @@ class VersionManager
         if (file_exists($versionFile)) {
             return json_decode(file_get_contents($versionFile));
         } else {
-            return (object) $this->versionDefault;
+            return (object) $this->releaseName;
         }
     }
 
@@ -102,7 +105,7 @@ class VersionManager
     public function updateAvailable($requestedVersion, $platform)
     {
         $currentVersion = $this->getCurrentVersion();
-        if (version_compare($requestedVersion, $currentVersion->currentVersion) === -1) {
+        if (version_compare($requestedVersion, $currentVersion->releaseName) === -1) {
             return ($currentVersion->$platform !== null);
         }
         return false;

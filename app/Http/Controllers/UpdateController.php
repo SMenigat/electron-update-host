@@ -74,8 +74,10 @@ class UpdateController
         )) {
             $currentVersion = $versionManager->getCurrentVersion();
             $response = [
-                "latestVersion" => $currentVersion->currentVersion,
-                "updatePath"  => url("/update/${requestedPlattform}/latest"),
+                "releaseNotes" => '',
+                "releaseName" => $currentVersion->releaseName,
+                "releaseDate" => $currentVersion->releaseDate,
+                "updateURL"  => url("/update/${requestedPlattform}/latest"),
             ];
             return response()->json($response);
         }
