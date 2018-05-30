@@ -21,8 +21,10 @@ class UpdateController
         if ($passwordHeader && $uploadPassword) {
 
             // check if password header is set correctly
-            if ($request->input($passwordHeader) !== $uploadPassword) {
-                return response('Upload password wrong.', 401);
+            $sentPw = trim($request->header($passwordHeader));
+            $uploadPassword = trim($uploadPassword);
+            if ($sentPw !== $uploadPassword) {
+                return response("Upload password wrong.", 401);
             }
         }
 
