@@ -29,7 +29,7 @@ You need at least PHP `v7.1.3` to run this app. Check [Lumens requirements](http
 ## Configuration
 Besides the standard [.env configuration](https://lumen.laravel.com/docs/5.2/configuration#environment-configuration) you should secure your upload enpoint by defining a **password header**.
 
-You can define this password settings in your `.env` file. Have a look at the example below:
+You can define these password settings in your `.env` file. Have a look at the example below:
 
 ```INI
 UPLOAD_PASSWORD_HEADER=X-Password-Header
